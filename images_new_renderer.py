@@ -1,6 +1,7 @@
 from refraction_render.calcs import CurveCalc,FlatCalc
 from refraction_render.renderers import Renderer_Composite,Scene,land_model
 from refraction_render.misc import mi_to_m
+from PIL import ImageFilter
 import numpy as np
 import os,gdal,pyproj
 import cProfile
@@ -32,7 +33,8 @@ def get_elevation_IOM():
 
 	return lats,lons,data
 
-
+def postprocess(im):
+	return im.filter(ImageFilter.SMOOTH_MORE)
 
 
 
@@ -40,7 +42,7 @@ def make_scene():
 
 	theta_i,phi_i=54.489822, -3.604765
 	s = Scene()
-	image_path = os.path.join("images","MG_lighthouse_model.png")
+	image_path = os.path.join("model_images","MG_lighthouse_model.png")
 	s.add_image(image_path,(43.7,54.295668,-4.309418),dimensions=(-1,23))
 	s.add_elevation_model(*get_elevation_IOM())
 
@@ -81,7 +83,6 @@ calc = CurveCalc(**calc_args)
 renderer = Renderer_Composite(calc,h0,theta_i,phi_i,mi_to_m(60),
 							  vert_res=2000,focal_length=2000,distance_res=10.0,vert_obs_angle=0.1)
 
-
 vfov = renderer.vfov
 heading_mins = np.arange(235,259,3)
 heading_maxs = heading_mins + 3
@@ -91,4 +92,13 @@ s = make_scene()
 
 surface_color = [23,111,197]
 renderer.render_scene(s,image_names,heading_mins,heading_maxs,cfunc=cfunc,
-	disp=True,eye_level=True,surface_color=surface_color)
+	disp=True,eye_level=True,surface_color=surface_color,postprocess=postprocess)
+
+h0=35
+image_names = ["images/location_2/g/IOM_parts_new/IOM_location_2_g_vfov_{:.5f}_part_{}_{}_{}.png".format(vfov,h0,a,b) for a,b in zip(heading_mins,heading_maxs)]
+
+renderer = Renderer_Composite(calc,h0,theta_i,phi_i,mi_to_m(60),
+	vert_res=2000,focal_length=2000,distance_res=10.0,vert_obs_angle=0.1)
+
+renderer.render_scene(s,image_names,heading_mins,heading_maxs,cfunc=cfunc,
+	disp=True,eye_level=True,surface_color=surface_color,postprocess=postprocess)

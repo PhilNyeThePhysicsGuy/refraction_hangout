@@ -181,7 +181,7 @@ def sphere_image_fast(calc_args,image_name,ellps,theta_i,phi_i,h0,heading_mins,h
 	calc = CurveCalc(**calc_args)
 
 	# lighthouse image at z
-	lh_image = Image.open("images/MG_lighthouse_model.png")
+	lh_image = Image.open("model_images/MG_lighthouse_model.png")
 	lh_png_data = np.array(lh_image)
 
 	lh_png_data = lh_png_data[::-1,:,:].transpose((1,0,2)).copy()
